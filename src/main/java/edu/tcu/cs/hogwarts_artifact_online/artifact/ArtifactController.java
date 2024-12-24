@@ -18,6 +18,7 @@ public class ArtifactController {
 
     @GetMapping("/api/v1/artifacts/{artifactId}")
     public Result findArtifactById(@PathVariable String artifactId) {
-        return null;
+        Artifact artifactFromArtifactServiceLayer = this.artifactService.findById(artifactId);
+        return new Result(true, StatusCode.SUCCESS, "Find One Success", artifactFromArtifactServiceLayer);
     }
 }
