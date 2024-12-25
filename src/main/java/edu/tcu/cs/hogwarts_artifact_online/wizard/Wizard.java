@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -21,6 +22,7 @@ public class Wizard implements Serializable {
     private List<Artifact> artifacts;
 
     public Wizard() {
+        this.artifacts = new ArrayList<>();
     }
 
     public Integer getId() {
@@ -41,6 +43,11 @@ public class Wizard implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void addArtifact(Artifact artifact) {
+        artifact.setOwner(this);
+        this.artifacts.add(artifact);
     }
 
     public void setArtifacts(List<Artifact> artifacts) {
