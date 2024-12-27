@@ -12,6 +12,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,8 +35,25 @@ class ArtifactServiceTest {
     @InjectMocks
     ArtifactService artifactService;
 
+    List<Artifact> listOfArtifacts;
+
     @BeforeEach
     void setUp() {
+        Artifact a1 = new Artifact();
+        a1.setId("1250808601744904191");
+        a1.setName("Deluminator");
+        a1.setDescription("A Deluminator is a device invented by Albus Dumbledore that resembles a cigarette lighter. It is used to remove or absorb (as well as return) the light from any light source to provide cover to the user.");
+        a1.setImageUrl("ImageUrl");
+
+        Artifact a2 = new Artifact();
+        a2.setId("1250808601744904192");
+        a2.setName("Invisibility Cloak");
+        a2.setDescription("An invisibility cloak is used to make the wearer invisible.");
+        a2.setImageUrl("ImageUrl");
+
+        this.listOfArtifacts = new ArrayList<>();
+        this.listOfArtifacts.add(a1);
+        this.listOfArtifacts.add(a2);
     }
 
     @AfterEach
@@ -148,5 +167,22 @@ class ArtifactServiceTest {
         verify(artifactRepository, times(1)).findById(artifactId);
         /// End of "Then" step.
         ///
+    }
+
+    @Test
+    void testFindAllArtifactSuccessScenario() {
+        /// Given Section.
+        /// Define the behavior of the findAll() method in ArtifactRepository object.
+        given(artifactRepository.findAll()).willReturn(this.listOfArtifacts);
+        /// End of Given Section.
+
+        /// When Section.
+        List<Artifact> actualArtifact = artifactService.findAll();
+        /// End of When Section.
+
+        /// Then Section.
+        assertThat(actualArtifact.size()).isEqualTo(this.listOfArtifacts.size());
+        verify(artifactRepository, times(1)).findAll();
+        /// End of Then Section.
     }
 }
