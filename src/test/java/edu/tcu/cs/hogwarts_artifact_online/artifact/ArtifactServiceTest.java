@@ -1,5 +1,6 @@
 package edu.tcu.cs.hogwarts_artifact_online.artifact;
 
+import edu.tcu.cs.hogwarts_artifact_online.artifact.util.IdWorker;
 import edu.tcu.cs.hogwarts_artifact_online.wizard.Wizard;
 
 import org.junit.jupiter.api.AfterEach;
@@ -31,6 +32,9 @@ class ArtifactServiceTest {
 
     @Mock
     ArtifactRepository artifactRepository;
+
+    @Mock
+    IdWorker idWorker;
 
     @InjectMocks
     ArtifactService artifactService;
@@ -151,13 +155,11 @@ class ArtifactServiceTest {
         /// End of "Given" step.
         ///
 
-
         ///
         /// "When" step.
         Throwable exceptionThrown = catchThrowable(() -> artifactService.findById(artifactId));
         /// End of "When" step.
         ///
-
 
         ///
         /// "Then" step.
@@ -184,5 +186,33 @@ class ArtifactServiceTest {
         assertThat(actualArtifact.size()).isEqualTo(this.listOfArtifacts.size());
         verify(artifactRepository, times(1)).findAll();
         /// End of Then Section.
+    }
+
+    @Test
+    void testSaveAnArtifactsSuccessScenario() {
+        /// Given Section.
+        Artifact newArtifact = new Artifact();
+        newArtifact.setName("Artifact 3");
+        newArtifact.setDescription("Description...");
+        newArtifact.setImageUrl("ImageUrl...");
+        ///
+
+        /// Defines the Mock Behavior of nextId Method in idWorker object.
+        given(idWorker.nextId()).willReturn(123456L);
+        /// Defines the Mock Behavior of save Method in artifactRepository object.
+        given(artifactRepository.save(newArtifact)).willReturn(newArtifact);
+        ///
+
+        /// When Section.
+        Artifact savedArtifact = artifactService.save(newArtifact);
+        ///
+
+        /// Then Section.
+        assertThat(savedArtifact.getId()).isEqualTo("123456");
+        assertThat(savedArtifact.getName()).isEqualTo(newArtifact.getName());
+        assertThat(savedArtifact.getDescription()).isEqualTo(newArtifact.getDescription());
+        assertThat(savedArtifact.getImageUrl()).isEqualTo(newArtifact.getImageUrl());
+        /// Verify that function being mocked get called
+        verify(artifactRepository, times(1)).save(newArtifact);
     }
 }

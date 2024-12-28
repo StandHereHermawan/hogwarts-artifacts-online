@@ -1,5 +1,7 @@
 package edu.tcu.cs.hogwarts_artifact_online.artifact;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.tcu.cs.hogwarts_artifact_online.artifact.data_transfer_object.ArtifactDTO;
 import edu.tcu.cs.hogwarts_artifact_online.system.StatusCode;
 import org.hamcrest.Matchers;
 
@@ -7,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +25,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 /// import static org.springframework.test.web.servlet.MockMvcBuilder.*;
 /// import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 /// import static org.assertj.core.configuration.Services.get; /// Salah Impor, Harusnya method get dari package 'org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get'
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,6 +41,9 @@ class ArtifactControllerTest {
 
     @Autowired
     MockMvc mockMvc;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     List<Artifact> listOfArtifact;
 
@@ -168,5 +175,40 @@ class ArtifactControllerTest {
                 .andExpect(jsonPath("$.data[6].name").value("Artifact 1")
                 );
         /// End of When and Then Section.
+    }
+
+    @Test
+    void testAddArtifactSuccess() throws Exception {
+        ArtifactDTO artifactDTO = new ArtifactDTO(null, "Remembrall",
+                "A Remembrall was a magical large marble-sized glass ball that contained smoke which turned red when its owner or user had forgotten something. It turned clear once whatever was forgotten was remembered.",
+                "ImageUrl",
+                null
+        );
+
+        String jsonFromArtifactDTO = this.objectMapper.writeValueAsString(artifactDTO);
+
+        /// Predefined Artifact Object that returned when save method on artifactService Object called.
+        Artifact savedArtifact = new Artifact();
+        savedArtifact.setId("1250808601744904197");
+        savedArtifact.setName("Remembrall");
+        savedArtifact.setDescription("A Remembrall was a magical large marble-sized glass ball that contained smoke which turned red when its owner or user had forgotten something. It turned clear once whatever was forgotten was remembered.");
+        savedArtifact.setImageUrl("ImageUrl");
+
+        /// Defines the behavior of save method from artifactService Object.
+        /// When save method get called, return an artifact object.
+        given(this.artifactService.save(Mockito.any(Artifact.class))).willReturn(savedArtifact);
+
+        this.mockMvc.perform(post("/api/v1/artifacts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonFromArtifactDTO)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value("Add Artifact Success"))
+                .andExpect(jsonPath("$.data.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.name").value(savedArtifact.getName()))
+                .andExpect(jsonPath("$.data.description").value(savedArtifact.getDescription()))
+                .andExpect(jsonPath("$.data.imageUrl").value(savedArtifact.getImageUrl())
+                );
     }
 }
