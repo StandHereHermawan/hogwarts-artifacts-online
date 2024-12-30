@@ -24,6 +24,12 @@ public class ExceptionHandlerAdvice {
         return new Result(false, StatusCode.NOT_FOUND, exception.getMessage());
     }
 
+    /**
+     * This handles invalid inputs.
+     *
+     * @param exception
+     * @return result
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     Result handleValidationException(MethodArgumentNotValidException exception) {

@@ -34,4 +34,21 @@ public class ArtifactService {
         newArtifact.setId(String.valueOf(idWorker.nextId()));
         return this.artifactRepository.save(newArtifact);
     }
+
+    public Artifact update(String artifactId, Artifact newerArtifactData) {
+        /// Old Code that not using error handling.
+        /// Artifact updatedArtifact = this.artifactRepository.findById(artifactId).get();
+        /// updatedArtifact.setName(updatingArtifactData.getName());
+        /// updatedArtifact.setDescription(updatingArtifactData.getDescription());
+        /// updatedArtifact.setImageUrl(updatingArtifactData.getImageUrl());
+        ///
+        /// return this.artifactRepository.save(updatedArtifact);
+        return this.artifactRepository.findById(artifactId).map(updatedArtifact -> {
+                    updatedArtifact.setName(newerArtifactData.getName());
+                    updatedArtifact.setDescription(newerArtifactData.getDescription());
+                    updatedArtifact.setImageUrl(newerArtifactData.getImageUrl());
+                    return this.artifactRepository.save(updatedArtifact);
+                })
+                .orElseThrow(() -> new ArtifactNotFoundException(artifactId));
+    }
 }

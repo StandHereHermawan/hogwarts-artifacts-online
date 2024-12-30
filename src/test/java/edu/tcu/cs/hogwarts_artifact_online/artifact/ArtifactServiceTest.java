@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 
 import static org.mockito.Mockito.times;
@@ -214,5 +215,71 @@ class ArtifactServiceTest {
         assertThat(savedArtifact.getImageUrl()).isEqualTo(newArtifact.getImageUrl());
         /// Verify that function being mocked get called
         verify(artifactRepository, times(1)).save(newArtifact);
+    }
+
+    @Test
+    void testUpdateAnArtifactSuccessScenario() {
+        /// Given Section.
+        ///
+        /// Define the old artifact.
+        Artifact oldArtifact = new Artifact();
+        oldArtifact.setId("1250808601744904192");
+        oldArtifact.setName("Invisibility Cloak");
+        oldArtifact.setDescription("An invisibility cloak is used to make the wearer invisible.");
+        oldArtifact.setImageUrl("ImageUrl");
+        ///
+        /// Define the updated artifact.
+        Artifact updatingArtifactData = new Artifact();
+        updatingArtifactData.setId("1250808601744904192");
+        updatingArtifactData.setName("Invisibility Cloak");
+        updatingArtifactData.setDescription("New Description, An invisibility cloak is used to make the wearer invisible.");
+        updatingArtifactData.setImageUrl("ImageUrl");
+        ///
+        /// Define the behavior of findById method repository object in this unit test method.
+        given(artifactRepository.findById(oldArtifact.getId())).willReturn(Optional.of(oldArtifact));
+        ///
+        /// Define the behavior of save method repository object in this unit test method.
+        given(artifactRepository.save(oldArtifact)).willReturn(oldArtifact);
+        ///
+
+
+        /// When Section.
+        Artifact updatedArtifact = artifactService.update(oldArtifact.getId(), updatingArtifactData);
+        ///
+
+
+        /// Then Section.
+        assertThat(updatedArtifact.getId()).isEqualTo(oldArtifact.getId());
+        assertThat(updatedArtifact.getDescription()).isEqualTo(updatingArtifactData.getDescription());
+        ///
+        /// Verify the save method and findById method get called 1 times.
+        verify(artifactRepository, times(1)).findById(oldArtifact.getId());
+        verify(artifactRepository, times(1)).save(oldArtifact);
+        ///
+
+    }
+
+    @Test
+    void testUpdateAnArtifactNotFoundScenario() {
+        /// Given Section.
+        Artifact artifact = new Artifact();
+        artifact.setId("1250808601744904192");
+        artifact.setName("Invisibility Cloak");
+        artifact.setDescription("An invisibility cloak is used to make the wearer invisible.");
+        artifact.setImageUrl("ImageUrl");
+        ///
+        /// Define findById method behavior in this unit test.
+        given(artifactRepository.findById(artifact.getId())).willReturn(Optional.empty());
+        ///
+
+
+        /// When Section.
+        assertThrows(ArtifactNotFoundException.class, () -> artifactService.update(artifact.getId(), artifact));
+        ///
+
+
+        /// Then Section.
+        verify(artifactRepository, times(1)).findById(artifact.getId());
+        ///
     }
 }

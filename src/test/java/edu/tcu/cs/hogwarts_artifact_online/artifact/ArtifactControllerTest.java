@@ -21,11 +21,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 /// import static org.springframework.test.web.servlet.MockMvcBuilder.*;
 /// import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 /// import static org.assertj.core.configuration.Services.get; /// Salah Impor, Harusnya method get dari package 'org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get'
 import static org.junit.jupiter.api.Assertions.*;
@@ -210,5 +210,150 @@ class ArtifactControllerTest {
                 .andExpect(jsonPath("$.data.description").value(savedArtifact.getDescription()))
                 .andExpect(jsonPath("$.data.imageUrl").value(savedArtifact.getImageUrl())
                 );
+    }
+
+    @Test
+    void testUpdateArtifactSuccess() throws Exception {
+        /// Given
+        ArtifactDTO artifactDTO;
+        {
+            artifactDTO = new ArtifactDTO(
+                    "1250808601744904192",
+                    "Invisibility Cloak",
+                    "An invisibility cloak is used " +
+                            "to make the wearer invisible.",
+                    "ImageUrl",
+                    null
+            );
+        }
+        ///
+        String jsonFromArtifactDTO;
+        {
+            jsonFromArtifactDTO = this.objectMapper
+                    .writeValueAsString(artifactDTO);
+        }
+        ///
+        /// Predefined Artifact Object that returned when save method on artifactService Object called.
+        Artifact updatedArtifact;
+        {
+            updatedArtifact = new Artifact();
+            updatedArtifact.setId("1250808601744904192");
+            updatedArtifact.setName("Invisibility Cloak");
+            updatedArtifact.setDescription("A new description. " +
+                    "An invisibility cloak is used " +
+                    "to make the wearer invisible.");
+            updatedArtifact.setImageUrl("ImageUrl");
+        }
+        ///
+        /// Defines save method behavior from artifactService object in this unit test method.
+        ///
+        {
+            /// This is solution from Mr. Bingyangwei
+            /// <pre>
+            /// <blockquote>
+            /// given(artifactService
+            ///     .update(eq(updatedArtifact.getId()), Mockito.any(Artifact.class)))
+            ///     .willReturn(updatedArtifact);
+            /// </blockquote>
+            /// </pre>
+            ///
+            /// This Solution is Mine.
+            /// <pre>
+            /// <blockquote>
+            /// given(artifactService
+            ///         .update(Mockito.any(String.class), Mockito.any(Artifact.class)))
+            ///         .willReturn(updatedArtifact);
+            /// </blockquote>
+            /// </pre>
+            ///
+        }
+        /// Using solution from Mr. Bingyangwei instead of mine.
+        given(artifactService
+                .update(eq(updatedArtifact.getId()), Mockito.any(Artifact.class)))
+                .willReturn(updatedArtifact);
+        ///
+
+
+        /// When and then
+        this.mockMvc.perform(put("/api/v1/artifacts/" + updatedArtifact.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonFromArtifactDTO)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value("Update Artifact Success"))
+                .andExpect(jsonPath("$.data.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.id").value(updatedArtifact.getId()))
+                .andExpect(jsonPath("$.data.name").value(updatedArtifact.getName()))
+                .andExpect(jsonPath("$.data.description").value(updatedArtifact.getDescription()))
+                .andExpect(jsonPath("$.data.imageUrl").value(updatedArtifact.getImageUrl())
+                );
+        ///
+    }
+
+    @Test
+    void testUpdateArtifactNonExistentIdScenario() throws Exception {
+        /// Given
+        ArtifactDTO artifactDTO;
+        {
+            artifactDTO = new ArtifactDTO(
+                    "1250808601744904192",
+                    "Invisibility Cloak",
+                    "An invisibility cloak is used " +
+                            "to make the wearer invisible.",
+                    "ImageUrl",
+                    null
+            );
+        }
+        ///
+        String jsonFromArtifactDTO;
+        {
+            jsonFromArtifactDTO = this.objectMapper
+                    .writeValueAsString(artifactDTO);
+        }
+        ///
+        /// Defines save method behavior from artifactService object in this unit test method.
+        {
+            jsonFromArtifactDTO = jsonFromArtifactDTO;
+            ///
+            /// This is solution from Mr. Bingyangwei
+            /// <pre>
+            /// <blockquote>
+            /// given(artifactService
+            ///     .update(eq(updatedArtifact.getId()), Mockito.any(Artifact.class)))
+            ///     .willReturn(updatedArtifact);
+            /// </blockquote>
+            /// </pre>
+            ///
+            /// This Solution is Mine.
+            /// <pre>
+            /// <blockquote>
+            /// given(artifactService
+            ///         .update(Mockito.any(String.class), Mockito.any(Artifact.class)))
+            ///         .willReturn(updatedArtifact);
+            /// </blockquote>
+            /// </pre>
+            ///
+        }
+        /// Using solution from Mr. Bingyangwei instead of mine.
+        given(artifactService
+                .update(eq(artifactDTO.id()), Mockito.any(Artifact.class)))
+                .willThrow(new ArtifactNotFoundException(artifactDTO.id()));
+        ///
+
+
+        /// When and then
+        this.mockMvc.perform(put("/api/v1/artifacts/" + artifactDTO.id())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonFromArtifactDTO)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message")
+                        .value("Could not found " +
+                                "artifact with Id " + artifactDTO.id() + " :("))
+                .andExpect(jsonPath("$.data").isEmpty()
+                );
+        ///
     }
 }

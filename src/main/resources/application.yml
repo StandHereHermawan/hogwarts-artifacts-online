@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: hogwarts_artifact_online
+  datasource:
+    url: jdbc:h2:mem:hogwarts
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  # To show sql log
+  jpa:
+    show-sql: true
