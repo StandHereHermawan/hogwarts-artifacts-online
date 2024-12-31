@@ -25,6 +25,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 /// import static org.springframework.test.web.servlet.MockMvcBuilder.*;
 /// import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 /// import static org.assertj.core.configuration.Services.get; /// Salah Impor, Harusnya method get dari package 'org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get'
@@ -355,5 +357,43 @@ class ArtifactControllerTest {
                 .andExpect(jsonPath("$.data").isEmpty()
                 );
         ///
+    }
+
+    @Test
+    void testDeleteArtifactSuccessScenario() throws Exception {
+        /// Given
+        String artifactId = "1250808601744904191";
+        ///
+        /// Defines delete method behavior in artifactService object in this unit test.
+        doNothing().when(this.artifactService).delete(artifactId);
+        ///
+
+        /// When and Then
+        this.mockMvc.perform(delete("/api/v1/artifacts/" + artifactId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value("Delete Artifact Success"))
+                .andExpect(jsonPath("$.data").isEmpty()
+                );
+    }
+
+    @Test
+    void testDeleteArtifactNotFoundScenario() throws Exception {
+        /// Given
+        String artifactId = "1250808601744904191";
+        ///
+        /// Defines delete method behavior in artifactService object in this unit test.
+        doThrow(new ArtifactNotFoundException(artifactId)).when(this.artifactService).delete(artifactId);
+        ///
+
+        /// When and Then
+        this.mockMvc.perform(delete("/api/v1/artifacts/" + artifactId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value("Could not found artifact with Id " + artifactId + " :("))
+                .andExpect(jsonPath("$.data").isEmpty()
+                );
     }
 }

@@ -24,9 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
-
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ArtifactServiceTest {
@@ -280,6 +278,60 @@ class ArtifactServiceTest {
 
         /// Then Section.
         verify(artifactRepository, times(1)).findById(artifact.getId());
+        ///
+    }
+
+    @Test
+    void testDeleteAnArtifactSuccess() {
+        /// Given
+        Artifact artifact;
+        {
+            artifact = new Artifact();
+            artifact.setId("1250808601744904192");
+            artifact.setName("Invisibility Cloak");
+            artifact.setDescription("An invisibility cloak is used to make the wearer invisible.");
+            artifact.setImageUrl("ImageUrl");
+        }
+        ///
+        /// Define the behavior of findById and delete method from artifactRepository object in this unit test method
+        given(artifactRepository.findById(artifact.getId())).willReturn(Optional.of(artifact));
+        /// doNothing method for mocking the behavior of void method like deleteById method.
+        doNothing().when(artifactRepository).deleteById(artifact.getId());
+        ///
+
+
+        /// When
+        artifactService.delete(artifact.getId());
+        ///
+
+
+        /// Then
+        verify(artifactRepository, times(1)).deleteById(artifact.getId());
+        ///
+    }
+
+    @Test
+    void testDeleteArtifactNotFound() {
+        /// Given
+        String artifactId;
+        {
+            artifactId = "1250808601744904192";
+        }
+        ///
+        /// Define the behavior of findById method from artifactRepository object in this unit test method.
+        given(artifactRepository.findById(artifactId)).willReturn(Optional.empty());
+        ///
+
+
+        /// When
+        assertThrows(ArtifactNotFoundException.class, () -> {
+            artifactService.delete(artifactId);
+        });
+        ///
+
+
+        /// Then
+        verify(artifactRepository, times(1)).findById(artifactId);
         ///
     }
 }
