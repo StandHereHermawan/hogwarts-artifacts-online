@@ -76,6 +76,12 @@ public class DBDataInitializer implements CommandLineRunner {
         w3.setName("Neville Longbottom");
         w3.addArtifact(a5);
 
+        Wizard w4 = new Wizard();
+        w4.setId(4);
+        w4.setName("Agus Dumbledore");
+        w4.setArtifacts(null);
+        wizardRepository.save(w4);
+
         wizardRepository.save(w1);
         wizardRepository.save(w2);
         wizardRepository.save(w3);
