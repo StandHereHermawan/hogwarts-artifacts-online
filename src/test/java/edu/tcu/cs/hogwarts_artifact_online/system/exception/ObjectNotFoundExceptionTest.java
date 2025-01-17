@@ -17,10 +17,9 @@ class ObjectNotFoundExceptionTest {
 
         assertNotNull(new ObjectNotFoundException(Wizard.class.toString(), "1"));
 
-        formatRedConsoleOutput(new ObjectNotFoundException(Wizard.class.getSimpleName().toLowerCase(), "1"));
-        formatRedConsoleOutput(new ObjectNotFoundException(Wizard.class.getName().toLowerCase(), "1"));
-
-        formatRedConsoleOutput(Wizard.class.getName());
-        formatRedConsoleOutput(Wizard.class.getSimpleName());
+        /// formatRedConsoleOutput(new ObjectNotFoundException(Wizard.class.getSimpleName().toLowerCase(), "1"));
+        /// formatRedConsoleOutput(new ObjectNotFoundException(Wizard.class.getName().toLowerCase(), "1"));
+        /// formatRedConsoleOutput(Wizard.class.getName());
+        /// formatRedConsoleOutput(Wizard.class.getSimpleName());
     }
 }

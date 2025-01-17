@@ -40,8 +40,10 @@ public class WizardService {
     }
 
     public void delete(String wizardId) {
-        this.wizardRepository.findById(Integer.valueOf(wizardId))
+        Wizard wizardToBeDeleted = this.wizardRepository.findById(Integer.valueOf(wizardId))
                 .orElseThrow(() -> new WizardNotFoundException(wizardId));
+
+        wizardToBeDeleted.removeAllArtifacts();
         this.wizardRepository.deleteById(Integer.valueOf(wizardId));
     }
 }

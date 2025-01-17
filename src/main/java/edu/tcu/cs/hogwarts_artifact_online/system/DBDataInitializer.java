@@ -60,24 +60,24 @@ public class DBDataInitializer implements CommandLineRunner {
         a6.setImageUrl("ImageUrl");
 
         Wizard w1 = new Wizard();
-        w1.setId(1);
+        /// w1.setId(1); /// Commented causing IllegalStateException when adding @GeneratedValue(strategy = Generation.AUTO) in Wizard Entity.
         w1.setName("Albus Dumbledore");
         w1.addArtifact(a1);
         w1.addArtifact(a3);
 
         Wizard w2 = new Wizard();
-        w2.setId(2);
+        /// w2.setId(2); /// Commented causing IllegalStateException when adding @GeneratedValue(strategy = Generation.AUTO) in Wizard Entity.
         w2.setName("Harry Potter");
         w2.addArtifact(a2);
         w2.addArtifact(a4);
 
         Wizard w3 = new Wizard();
-        w3.setId(3);
+        /// w3.setId(3); /// Commented causing IllegalStateException when adding @GeneratedValue(strategy = Generation.AUTO) in Wizard Entity.
         w3.setName("Neville Longbottom");
         w3.addArtifact(a5);
 
         Wizard w4 = new Wizard();
-        w4.setId(4);
+        /// w4.setId(4); /// Commented causing IllegalStateException when adding @GeneratedValue(strategy = Generation.AUTO) in Wizard Entity.
         w4.setName("Agus Dumbledore");
         w4.setArtifacts(null);
         wizardRepository.save(w4);
