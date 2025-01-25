@@ -1,13 +1,12 @@
 package edu.tcu.cs.hogwarts_artifact_online.system.exception;
 
-import edu.tcu.cs.hogwarts_artifact_online.artifact.ArtifactNotFoundException;
 import edu.tcu.cs.hogwarts_artifact_online.system.Result;
 import edu.tcu.cs.hogwarts_artifact_online.system.StatusCode;
 
-import edu.tcu.cs.hogwarts_artifact_online.wizard.WizardNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -19,15 +18,9 @@ import java.util.List;
 @RestControllerAdvice
 public class ExceptionHandlerAdvice {
 
-    @ExceptionHandler(ArtifactNotFoundException.class)
+    @ExceptionHandler(ObjectNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    Result handleArtifactNotFoundException(ArtifactNotFoundException exception) {
-        return new Result(false, StatusCode.NOT_FOUND, exception.getMessage());
-    }
-
-    @ExceptionHandler(WizardNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    Result handleWizardNotFoundException(WizardNotFoundException exception) {
+    Result handleObjectNotFoundException(ObjectNotFoundException exception) {
         return new Result(false, StatusCode.NOT_FOUND, exception.getMessage());
     }
 

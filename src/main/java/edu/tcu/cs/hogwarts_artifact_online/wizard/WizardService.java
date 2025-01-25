@@ -1,5 +1,6 @@
 package edu.tcu.cs.hogwarts_artifact_online.wizard;
 
+import edu.tcu.cs.hogwarts_artifact_online.system.exception.ObjectNotFoundException;
 import edu.tcu.cs.hogwarts_artifact_online.wizard.util.identifier.WizardIdentifier;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,11 @@ public class WizardService {
 
     public Wizard findById(String wizardId) {
         return this.wizardRepository.findById(Integer.valueOf(wizardId))
-                .orElseThrow(() -> new WizardNotFoundException(wizardId));
+                .orElseThrow(() -> new ObjectNotFoundException(
+                                Wizard.class.getSimpleName().toLowerCase(),
+                                Integer.valueOf(wizardId)
+                        )
+                );
     }
 
     public List<Wizard> findAll() {
@@ -26,8 +31,6 @@ public class WizardService {
     }
 
     public Wizard save(Wizard newWizard) {
-        newWizard.setId(Integer.valueOf(WizardIdentifier.getIdentifier()));
-        WizardIdentifier.increment();
         return this.wizardRepository.save(newWizard);
     }
 
@@ -36,12 +39,20 @@ public class WizardService {
             wizard.setName(newerWizardData.getName());
             wizard.setArtifacts(newerWizardData.getArtifacts());
             return this.wizardRepository.save(wizard);
-        }).orElseThrow(() -> new WizardNotFoundException(wizardId));
+        }).orElseThrow(() -> new ObjectNotFoundException(
+                        Wizard.class.getSimpleName().toLowerCase(),
+                        Integer.valueOf(wizardId)
+                )
+        );
     }
 
     public void delete(String wizardId) {
         Wizard wizardToBeDeleted = this.wizardRepository.findById(Integer.valueOf(wizardId))
-                .orElseThrow(() -> new WizardNotFoundException(wizardId));
+                .orElseThrow(() -> new ObjectNotFoundException(
+                                Wizard.class.getSimpleName().toLowerCase(),
+                                Integer.valueOf(wizardId)
+                        )
+                );
 
         wizardToBeDeleted.removeAllArtifacts();
         this.wizardRepository.deleteById(Integer.valueOf(wizardId));
