@@ -228,7 +228,6 @@ class ArtifactServiceTest {
         ///
         /// Define the updated artifact.
         Artifact updatingArtifactData = new Artifact();
-        updatingArtifactData.setId("1250808601744904192");
         updatingArtifactData.setName("Invisibility Cloak");
         updatingArtifactData.setDescription("New Description, An invisibility cloak is used to make the wearer invisible.");
         updatingArtifactData.setImageUrl("ImageUrl");
