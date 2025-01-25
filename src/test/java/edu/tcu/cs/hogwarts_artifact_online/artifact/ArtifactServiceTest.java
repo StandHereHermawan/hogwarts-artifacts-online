@@ -1,6 +1,7 @@
 package edu.tcu.cs.hogwarts_artifact_online.artifact;
 
 import edu.tcu.cs.hogwarts_artifact_online.artifact.util.IdWorker;
+import edu.tcu.cs.hogwarts_artifact_online.system.exception.ObjectNotFoundException;
 import edu.tcu.cs.hogwarts_artifact_online.wizard.Wizard;
 
 import org.junit.jupiter.api.AfterEach;
@@ -163,7 +164,7 @@ class ArtifactServiceTest {
         ///
         /// "Then" step.
         assertThat(exceptionThrown)
-                .isInstanceOf(ArtifactNotFoundException.class)
+                .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not found artifact with Id " + artifactId + " :(");
         verify(artifactRepository, times(1)).findById(artifactId);
         /// End of "Then" step.
@@ -271,7 +272,7 @@ class ArtifactServiceTest {
 
 
         /// When Section.
-        assertThrows(ArtifactNotFoundException.class, () -> artifactService.update(artifact.getId(), artifact));
+        assertThrows(ObjectNotFoundException.class, () -> artifactService.update(artifact.getId(), artifact));
         ///
 
 
@@ -323,7 +324,7 @@ class ArtifactServiceTest {
 
 
         /// When
-        assertThrows(ArtifactNotFoundException.class, () -> {
+        assertThrows(ObjectNotFoundException.class, () -> {
             artifactService.delete(artifactId);
         });
         ///

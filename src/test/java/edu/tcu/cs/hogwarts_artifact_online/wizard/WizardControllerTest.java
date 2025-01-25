@@ -4,6 +4,7 @@ import edu.tcu.cs.hogwarts_artifact_online.system.StatusCode;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import edu.tcu.cs.hogwarts_artifact_online.system.exception.ObjectNotFoundException;
 import edu.tcu.cs.hogwarts_artifact_online.wizard.data_transfer_object.CreateWizardDto;
 import edu.tcu.cs.hogwarts_artifact_online.wizard.data_transfer_object.UpdateWizardDto;
 import org.junit.jupiter.api.AfterEach;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -44,6 +46,9 @@ class WizardControllerTest {
     ObjectMapper objectMapper;
 
     List<Wizard> listOfWizard;
+
+    @Value("${api.endpoint.base-url}")
+    String baseUrl;
 
     @BeforeEach
     void setUp() {
@@ -91,7 +96,7 @@ class WizardControllerTest {
         /// End of Given Section.
 
         /// When and Then Section.
-        this.mockMvc.perform(get("/api/v1/wizards/" + wizardId)
+        this.mockMvc.perform(get(this.baseUrl + "/wizards/" + wizardId)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
@@ -110,11 +115,11 @@ class WizardControllerTest {
         /// Given Section.
         given(this.wizardService
                 .findById(wizardId))
-                .willThrow(new WizardNotFoundException(wizardId));
+                .willThrow(new ObjectNotFoundException(Wizard.class.getSimpleName().toLowerCase(), wizardId));
         /// End of Given Section.
 
         /// When and Then Section.
-        this.mockMvc.perform(get("/api/v1/wizards/" + wizardId)
+        this.mockMvc.perform(get(this.baseUrl + "/wizards/" + wizardId)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
@@ -137,7 +142,7 @@ class WizardControllerTest {
         /// End of Given Section.
 
         /// When and Then Section
-        this.mockMvc.perform(get("/api/v1/wizards")
+        this.mockMvc.perform(get(this.baseUrl + "/wizards")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
@@ -167,7 +172,7 @@ class WizardControllerTest {
         /// End of Given Section.
 
         /// When and Then Section
-        this.mockMvc.perform(post("/api/v1/wizards")
+        this.mockMvc.perform(post(this.baseUrl + "/wizards")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(wizardDtoToJson)
                         .accept(MediaType.APPLICATION_JSON))
@@ -208,7 +213,7 @@ class WizardControllerTest {
         /// End of Given Section.
 
         /// When and Then Section.
-        this.mockMvc.perform(put("/api/v1/wizards/" + returnedUpdatedWizard.getId())
+        this.mockMvc.perform(put(this.baseUrl + "/wizards/" + returnedUpdatedWizard.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonFromUpdatedArtifactDto)
                         .accept(MediaType.APPLICATION_JSON))
@@ -242,17 +247,18 @@ class WizardControllerTest {
         ///
         given(this.wizardService
                 .update(eq(wizardId), Mockito.any(Wizard.class)))
-                .willThrow(new WizardNotFoundException(wizardId));
+                .willThrow(new ObjectNotFoundException(Wizard.class.getSimpleName().toLowerCase(), wizardId));
         /// End of Given Section.
 
         /// When and Then Section.
-        this.mockMvc.perform(put("/api/v1/wizards/" + wizardId)
+        this.mockMvc.perform(put(this.baseUrl + "/wizards/" + wizardId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonFromUpdatedArtifactDto)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
-                .andExpect(jsonPath("$.message").value(new WizardNotFoundException(wizardId).getMessage()))
+                .andExpect(jsonPath("$.message").value(new ObjectNotFoundException(
+                        Wizard.class.getSimpleName().toLowerCase(), wizardId).getMessage()))
                 .andExpect(jsonPath("$.data").isEmpty()
                 );
         /// End of When and Then Section.
@@ -273,7 +279,7 @@ class WizardControllerTest {
         /// End of Given Section.
 
         /// When and Then Section.
-        this.mockMvc.perform(delete("/api/v1/wizards/" + wizardId)
+        this.mockMvc.perform(delete(this.baseUrl + "/wizards/" + wizardId)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
@@ -292,13 +298,13 @@ class WizardControllerTest {
         }
         ///
         /// Defines delete method behavior in artifactService object in this unit test.
-        doThrow(new WizardNotFoundException(wizardId))
+        doThrow(new ObjectNotFoundException(Wizard.class.getSimpleName().toLowerCase(), wizardId))
                 .when(this.wizardService)
                 .delete(wizardId);
         /// End of Given Section.
 
         /// When and Then Section.
-        this.mockMvc.perform(delete("/api/v1/wizards/" + wizardId)
+        this.mockMvc.perform(delete(this.baseUrl + "/wizards/" + wizardId)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
