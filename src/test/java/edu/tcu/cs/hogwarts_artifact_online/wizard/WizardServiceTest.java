@@ -1,5 +1,7 @@
 package edu.tcu.cs.hogwarts_artifact_online.wizard;
 
+import edu.tcu.cs.hogwarts_artifact_online.artifact.Artifact;
+import edu.tcu.cs.hogwarts_artifact_online.artifact.ArtifactRepository;
 import edu.tcu.cs.hogwarts_artifact_online.system.exception.ObjectNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +28,9 @@ class WizardServiceTest {
 
     @Mock
     WizardRepository wizardRepository;
+
+    @Mock
+    ArtifactRepository artifactRepository;
 
     @InjectMocks
     WizardService wizardService;
@@ -290,6 +295,149 @@ class WizardServiceTest {
         /// Then Section.
         verify(this.wizardRepository, times(1))
                 .findById(Integer.valueOf(wizardId));
+        /// End of Then Section.
+    }
+
+    @Test
+    void testAssignArtifactToWizardSuccessScenario() {
+        /// Given Section.
+        Artifact artifact2;
+        {
+            artifact2 = new Artifact();
+            artifact2.setId("1250808601744904192");
+            artifact2.setName("Invisibility Cloak");
+            artifact2.setDescription("An invisibility cloak is used to make the wearer invisible.");
+            artifact2.setImageUrl("ImageUrl");
+        }
+
+        Wizard wizard2;
+        {
+            wizard2 = new Wizard();
+            wizard2.setId(2);
+            wizard2.setName("Heri Kolter");
+            wizard2.addArtifact(artifact2);
+        }
+
+        Wizard wizard3;
+        {
+            wizard3 = new Wizard();
+            wizard3.setId(3);
+            wizard3.setName("Ujang Ngokop Baskom");
+        }
+        /// Define findById method from artifactRepository behavior.
+        given(this.artifactRepository.findById(artifact2.getId()))
+                .willReturn(Optional.of(artifact2));
+        /// Define findById method from wizardRepository behavior.
+        given(this.wizardRepository.findById(wizard3.getId()))
+                .willReturn(Optional.of(wizard3));
+        /// End of Given Section.
+
+        /// When Section.
+        this.wizardService.assignArtifact(wizard3.getId(), artifact2.getId());
+        /// End of When Section.
+
+        /// Then Section.
+        assertThat(artifact2.getOwner().getId()).isEqualTo(wizard3.getId());
+        assertThat(wizard3.getArtifacts()).contains(artifact2);
+        /// End of Then Section.
+    }
+
+    @Test
+    void testAssignArtifactToWizardThatWizardNonExistentScenario() {
+        /// Given Section.
+        Artifact artifact2;
+        {
+            artifact2 = new Artifact();
+            artifact2.setId("1250808601744904192");
+            artifact2.setName("Invisibility Cloak");
+            artifact2.setDescription("An invisibility cloak is used to make the wearer invisible.");
+            artifact2.setImageUrl("ImageUrl");
+        }
+
+        Wizard wizard2;
+        {
+            wizard2 = new Wizard();
+            wizard2.setId(2);
+            wizard2.setName("Heri Kolter");
+            wizard2.addArtifact(artifact2);
+        }
+
+        Wizard wizard3;
+        {
+            wizard3 = new Wizard();
+            wizard3.setId(3);
+            wizard3.setName("Ujang Ngokop Baskom");
+        }
+        /// Define findById method from artifactRepository behavior.
+        given(this.artifactRepository.findById(artifact2.getId()))
+                .willReturn(Optional.of(artifact2));
+        /// Define findById method from wizardRepository behavior.
+        given(this.wizardRepository.findById(wizard3.getId()))
+                .willReturn(Optional.empty());
+        /// End of Given Section.
+
+        /// When Section.
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
+            this.wizardService.assignArtifact(wizard3.getId(), artifact2.getId());
+        });
+        /// End of When Section.
+
+        /// Then Section.
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage(new ObjectNotFoundException(
+                        Wizard.class.getSimpleName().toLowerCase(),
+                        wizard3.getId())
+                        .getMessage());
+        assertThat(artifact2.getOwner().getId())
+                .isEqualTo(wizard2.getId());
+        /// End of Then Section.
+    }
+
+    @Test
+    void testAssignArtifactToWizardThatArtifactNonExistentScenario() {
+        /// Given Section.
+        Artifact artifact2;
+        {
+            artifact2 = new Artifact();
+            artifact2.setId("1250808601744904192");
+            artifact2.setName("Invisibility Cloak");
+            artifact2.setDescription("An invisibility cloak is used to make the wearer invisible.");
+            artifact2.setImageUrl("ImageUrl");
+        }
+
+        Wizard wizard2;
+        {
+            wizard2 = new Wizard();
+            wizard2.setId(2);
+            wizard2.setName("Heri Kolter");
+            wizard2.addArtifact(artifact2);
+        }
+
+        Wizard wizard3;
+        {
+            wizard3 = new Wizard();
+            wizard3.setId(3);
+            wizard3.setName("Ujang Ngokop Baskom");
+        }
+        /// Define findById method from artifactRepository behavior.
+        given(this.artifactRepository.findById(artifact2.getId()))
+                .willReturn(Optional.empty());
+        /// End of Given Section.
+
+        /// When Section.
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
+            this.wizardService.assignArtifact(wizard3.getId(), artifact2.getId());
+        });
+        /// End of When Section.
+
+        /// Then Section.
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage(new ObjectNotFoundException(
+                        Artifact.class.getSimpleName().toLowerCase(),
+                        artifact2.getId())
+                        .getMessage());
         /// End of Then Section.
     }
 }
