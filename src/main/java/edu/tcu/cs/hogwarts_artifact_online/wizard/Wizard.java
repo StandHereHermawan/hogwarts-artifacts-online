@@ -62,4 +62,10 @@ public class Wizard implements Serializable {
         });
         this.artifacts = null;
     }
+
+    public void removeArtifact(Artifact artifactToBeAssigned) {
+        /// Remove Artifact owner
+        artifactToBeAssigned.setOwner(null);
+        this.artifacts.remove(artifactToBeAssigned);
+    }
 }

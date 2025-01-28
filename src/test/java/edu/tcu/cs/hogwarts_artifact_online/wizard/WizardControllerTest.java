@@ -1,5 +1,6 @@
 package edu.tcu.cs.hogwarts_artifact_online.wizard;
 
+import edu.tcu.cs.hogwarts_artifact_online.artifact.Artifact;
 import edu.tcu.cs.hogwarts_artifact_online.system.StatusCode;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -155,7 +156,7 @@ class WizardControllerTest {
     }
 
     @Test
-    void testAddWizardSuccess() throws Exception {
+    void testAddWizardSuccessScenario() throws Exception {
         /// Given Section.
         CreateWizardDto wizardDTO = new CreateWizardDto("Agus Dumbledore");
         ///
@@ -186,7 +187,7 @@ class WizardControllerTest {
     }
 
     @Test
-    void testUpdateWizardSuccess() throws Exception {
+    void testUpdateWizardSuccessScenario() throws Exception {
         /// Given Section.
         UpdateWizardDto updateWizardDto;
         {
@@ -228,7 +229,7 @@ class WizardControllerTest {
     }
 
     @Test
-    void testUpdateWizardNotExistentId() throws Exception {
+    void testUpdateWizardNotExistentIdScenario() throws Exception {
         /// Given Section.
         UpdateWizardDto updateWizardDto;
         {
@@ -290,7 +291,7 @@ class WizardControllerTest {
     }
 
     @Test
-    void testDeleteWizardNotFoundScnario() throws Exception {
+    void testDeleteWizardNotFoundScenario() throws Exception {
         /// Given Section.
         String wizardId;
         {
@@ -312,5 +313,133 @@ class WizardControllerTest {
                 .andExpect(jsonPath("$.data").isEmpty())
         ;
         /// End of When and Then Section.
+    }
+
+    @Test
+    void testAssignArtifactSuccessScenario() throws Exception {
+        /// Given Section.
+        Artifact artifact2;
+        {
+            artifact2 = new Artifact();
+            artifact2.setId("1250808601744904192");
+            artifact2.setName("Invisibility Cloak");
+            artifact2.setDescription("An invisibility cloak is used to make the wearer invisible.");
+            artifact2.setImageUrl("ImageUrl");
+        }
+
+        Wizard wizard2;
+        {
+            wizard2 = new Wizard();
+            wizard2.setId(2);
+            wizard2.setName("Heri Kolter");
+            wizard2.addArtifact(artifact2);
+        }
+
+        /// Define assignArtifact method from wizardService.
+        doNothing().when(this.wizardService)
+                .assignArtifact(wizard2.getId(), artifact2.getId());
+        /// End of Given Section.
+
+        /// When and Then Section.
+        this.mockMvc.perform(put(this.baseUrl + "/wizards/" + wizard2.getId() + "/artifacts/" + artifact2.getId())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(
+                        "Artifact Assignment Success."
+                ))
+                .andExpect(jsonPath("$.data").isEmpty())
+        ;
+        /// When and Then Section.
+    }
+
+    @Test
+    void testAssignArtifactThatWizardNotFoundScenario() throws Exception {
+        /// Given Section.
+        Artifact artifact2;
+        {
+            artifact2 = new Artifact();
+            artifact2.setId("1250808601744904192");
+            artifact2.setName("Invisibility Cloak");
+            artifact2.setDescription("An invisibility cloak is used to make the wearer invisible.");
+            artifact2.setImageUrl("ImageUrl");
+        }
+
+        Wizard wizard2;
+        {
+            wizard2 = new Wizard();
+            wizard2.setId(2);
+            wizard2.setName("Heri Kolter");
+            wizard2.addArtifact(artifact2);
+        }
+
+        /// Define assignArtifact method from wizardService.
+        doThrow(new ObjectNotFoundException(
+                Wizard.class.getSimpleName().toLowerCase(),
+                wizard2.getId()))
+                .when(this.wizardService)
+                .assignArtifact(wizard2.getId(), artifact2.getId());
+        /// End of Given Section.
+
+        /// When and Then Section.
+        this.mockMvc.perform(put(this.baseUrl +
+                        "/wizards/" + wizard2.getId() +
+                        "/artifacts/" + artifact2.getId())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value(
+                        new ObjectNotFoundException(
+                                Wizard.class.getSimpleName().toLowerCase(),
+                                wizard2.getId())
+                                .getMessage()
+                )).andExpect(jsonPath("$.data").isEmpty())
+        ;
+        /// When and Then Section.
+    }
+
+    @Test
+    void testAssignArtifactThatArtifactNotFoundScenario() throws Exception {
+        /// Given Section.
+        Artifact artifact2;
+        {
+            artifact2 = new Artifact();
+            artifact2.setId("1250808601744904192");
+            artifact2.setName("Invisibility Cloak");
+            artifact2.setDescription("An invisibility cloak is used to make the wearer invisible.");
+            artifact2.setImageUrl("ImageUrl");
+        }
+
+        Wizard wizard2;
+        {
+            wizard2 = new Wizard();
+            wizard2.setId(2);
+            wizard2.setName("Heri Kolter");
+            wizard2.addArtifact(artifact2);
+        }
+
+        /// Define assignArtifact method from wizardService.
+        doThrow(new ObjectNotFoundException(
+                Artifact.class.getSimpleName().toLowerCase(),
+                wizard2.getId()))
+                .when(this.wizardService)
+                .assignArtifact(wizard2.getId(), artifact2.getId());
+        /// End of Given Section.
+
+        /// When and Then Section.
+        this.mockMvc.perform(put(this.baseUrl +
+                        "/wizards/" + wizard2.getId() +
+                        "/artifacts/" + artifact2.getId())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value(
+                        new ObjectNotFoundException(
+                                Artifact.class.getSimpleName().toLowerCase(),
+                                wizard2.getId())
+                                .getMessage()
+                )).andExpect(jsonPath("$.data").isEmpty())
+        ;
+        /// When and Then Section.
     }
 }

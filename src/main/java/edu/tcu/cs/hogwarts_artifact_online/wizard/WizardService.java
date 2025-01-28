@@ -1,5 +1,7 @@
 package edu.tcu.cs.hogwarts_artifact_online.wizard;
 
+import edu.tcu.cs.hogwarts_artifact_online.artifact.Artifact;
+import edu.tcu.cs.hogwarts_artifact_online.artifact.ArtifactRepository;
 import edu.tcu.cs.hogwarts_artifact_online.system.exception.ObjectNotFoundException;
 import edu.tcu.cs.hogwarts_artifact_online.wizard.util.identifier.WizardIdentifier;
 import jakarta.transaction.Transactional;
@@ -13,8 +15,11 @@ public class WizardService {
 
     private final WizardRepository wizardRepository;
 
-    public WizardService(WizardRepository wizardRepository) {
+    private final ArtifactRepository artifactRepository;
+
+    public WizardService(WizardRepository wizardRepository, ArtifactRepository artifactRepository) {
         this.wizardRepository = wizardRepository;
+        this.artifactRepository = artifactRepository;
     }
 
     public Wizard findById(String wizardId) {
@@ -56,5 +61,31 @@ public class WizardService {
 
         wizardToBeDeleted.removeAllArtifacts();
         this.wizardRepository.deleteById(Integer.valueOf(wizardId));
+    }
+
+    public void assignArtifact(Integer wizardId, String artifactId) {
+        /// Find the desired artifact by artifactId that already given.
+        Artifact artifactToBeAssigned;
+        {
+            artifactToBeAssigned = this.artifactRepository.findById(artifactId)
+                    .orElseThrow(() -> new ObjectNotFoundException(
+                            Artifact.class.getSimpleName().toLowerCase(),
+                            artifactId));
+        }
+        /// Find the desired wizard by wizardId that already given.
+        Wizard newArtifactOwner;
+        {
+            newArtifactOwner = this.wizardRepository.findById(wizardId)
+                    .orElseThrow(() -> new ObjectNotFoundException(
+                            Wizard.class.getSimpleName().toLowerCase(),
+                            wizardId));
+        }
+
+        /// Artifact assignment.
+        /// We need to check if artifact already signed to a wizard or not.
+        if (artifactToBeAssigned.getOwner() != null) {
+            artifactToBeAssigned.getOwner().removeArtifact(artifactToBeAssigned);
+        }
+        newArtifactOwner.addArtifact(artifactToBeAssigned);
     }
 }
