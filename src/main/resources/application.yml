@@ -1,4 +1,10 @@
 spring:
+  # Start For accessing protected endpoints by spring security
+  security:
+    user:
+      name: user
+      password: rahasia
+  # End line For accessing protected endpoints by spring security
   application:
     name: hogwarts_artifact_online
   datasource:

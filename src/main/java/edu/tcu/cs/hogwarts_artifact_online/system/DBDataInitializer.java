@@ -4,6 +4,7 @@ import edu.tcu.cs.hogwarts_artifact_online.artifact.Artifact;
 import edu.tcu.cs.hogwarts_artifact_online.artifact.ArtifactRepository;
 import edu.tcu.cs.hogwarts_artifact_online.hogwarts_user.HogwartsUser;
 import edu.tcu.cs.hogwarts_artifact_online.hogwarts_user.UserRepository;
+import edu.tcu.cs.hogwarts_artifact_online.hogwarts_user.UserService;
 import edu.tcu.cs.hogwarts_artifact_online.wizard.Wizard;
 import edu.tcu.cs.hogwarts_artifact_online.wizard.WizardRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -16,14 +17,14 @@ public class DBDataInitializer implements CommandLineRunner {
 
     private final WizardRepository wizardRepository;
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     public DBDataInitializer(ArtifactRepository artifactRepository,
                              WizardRepository wizardRepository,
-                             UserRepository userRepository) {
+                             UserService userService) {
         this.artifactRepository = artifactRepository;
         this.wizardRepository = wizardRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @Override
@@ -130,7 +131,7 @@ public class DBDataInitializer implements CommandLineRunner {
             hogwartsUser1.setPassword("123456");
             hogwartsUser1.setEnabled(true);
             hogwartsUser1.setRoles("admin user");
-            this.userRepository.save(hogwartsUser1);
+            this.userService.save(hogwartsUser1);
         }
 
         HogwartsUser hogwartsUser2 = new HogwartsUser();
@@ -140,7 +141,7 @@ public class DBDataInitializer implements CommandLineRunner {
             hogwartsUser2.setPassword("654321");
             hogwartsUser2.setEnabled(true);
             hogwartsUser2.setRoles("user");
-            this.userRepository.save(hogwartsUser2);
+            this.userService.save(hogwartsUser2);
         }
 
         HogwartsUser hogwartsUser3 = new HogwartsUser();
@@ -150,7 +151,7 @@ public class DBDataInitializer implements CommandLineRunner {
             hogwartsUser3.setPassword("qwerty");
             hogwartsUser3.setEnabled(false);
             hogwartsUser3.setRoles("user");
-            this.userRepository.save(hogwartsUser3);
+            this.userService.save(hogwartsUser3);
         }
     }
 }

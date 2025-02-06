@@ -2,18 +2,25 @@ package edu.tcu.cs.hogwarts_artifact_online.hogwarts_user;
 
 import edu.tcu.cs.hogwarts_artifact_online.system.exception.ObjectNotFoundException;
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 @Transactional
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    public UserService(UserRepository userRepository) {
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<HogwartsUser> findAllUsers() {
@@ -30,7 +37,8 @@ public class UserService {
     }
 
     public HogwartsUser save(HogwartsUser invokedHogwartsUser) {
-        /// We need to encode plain password before saving to the DB! TODO
+        /// Line 38 code was hash the user password using BCrypt
+        invokedHogwartsUser.setPassword(this.passwordEncoder.encode(invokedHogwartsUser.getPassword()));
         return this.userRepository.save(invokedHogwartsUser);
     }
 
@@ -95,5 +103,20 @@ public class UserService {
         }
         this.userRepository.deleteById(hogwartsUser.getId());
         return hogwartsUser;
+    }
+
+    private String errorMessage(String username) {
+        return "username " + username + " is not found.";
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return this.userRepository.findByUsername(username) // find user with specific declared username.
+                .map(hogwartsUser
+                        -> new MyUserPrincipal(hogwartsUser)) // If found,
+                // wrap HogwartsUser instance in MyUserPrincipal instance.
+                .orElseThrow(()
+                        -> new UsernameNotFoundException(this.errorMessage(username))); // Otherwise,
+                // throw an Exception.
     }
 }
