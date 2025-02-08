@@ -38,10 +38,24 @@ public class SecurityConfiguration {
 
     private final RSAPrivateKey rsaPrivateKey;
 
+    private final CustomBasicAuthenticationEntryPoint customBasicAuthenticationEntryPoint;
+
+    private final CustomBearerTokenAuthenticationEntryPoint customBearerTokenAuthenticationEntryPoint;
+
+    private final CustomBearerTokenAccessDeniedHandler customBearerTokenAccessDeniedHandler;
+
     @Value("${api.endpoint.base-url}")
     private String baseUrl;
 
-    public SecurityConfiguration() throws NoSuchAlgorithmException {
+    public SecurityConfiguration(CustomBasicAuthenticationEntryPoint customBasicAuthenticationEntryPoint,
+                                 CustomBearerTokenAuthenticationEntryPoint customBearerTokenAuthenticationEntryPoint,
+                                 CustomBearerTokenAccessDeniedHandler customBearerTokenAccessDeniedHandler)
+            throws NoSuchAlgorithmException {
+        this.customBasicAuthenticationEntryPoint = customBasicAuthenticationEntryPoint;
+        this.customBearerTokenAuthenticationEntryPoint = customBearerTokenAuthenticationEntryPoint;
+        this.customBearerTokenAccessDeniedHandler = customBearerTokenAccessDeniedHandler;
+
+        // Generate a public/private keypair.
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(2048); // The generated key will have a size of 2048 bits.
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
@@ -88,10 +102,9 @@ public class SecurityConfiguration {
                                 .permitAll()
                                 /// To Make the ``/h2-console`` endpoint accessible without needing authentication.
                                 ///
-                                .anyRequest().authenticated()
+                                .anyRequest().authenticated() /// Always a good idea to put this as last.
                         /// To make every url that not declarated in this class are protected by middleware.
                 )
-                ///
                 // .headers(headers -> headers
                 //         .frameOptions().disable())
                 /// method ".headers(headers -> headers
@@ -105,17 +118,24 @@ public class SecurityConfiguration {
                 /// expected solution for the deprecated "headers.frameOptions().disable()" method.
                 ///
                 .csrf(csrf -> csrf.disable())
-                .httpBasic(Customizer.withDefaults())
+                .httpBasic(httpSecurityHttpBasicConfigurer
+                        -> httpSecurityHttpBasicConfigurer
+                        .authenticationEntryPoint(this.customBasicAuthenticationEntryPoint))
                 ///
-                // .oauth2ResourceServer(
-                //         httpSecurityOAuth2ResourceServerConfigurer
-                //                 -> httpSecurityOAuth2ResourceServerConfigurer.jwt())
+                // .oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer
+                //                 -> httpSecurityOAuth2ResourceServerConfigurer.jwt()
+                //                 .and().authenticationEntryPoint(this.customBearerTokenAuthenticationEntryPoint)
+                //                 .accessDeniedHandler(this.customBearerTokenAccessDeniedHandler))
                 /// method ".oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer
-                ///                 -> httpSecurityOAuth2ResourceServerConfigurer.jwt())"
+                ///                         -> httpSecurityOAuth2ResourceServerConfigurer.jwt()
+                ///                         .and().authenticationEntryPoint(this.customBearerTokenAuthenticationEntryPoint)
+                ///                         .accessDeniedHandler(this.customBearerTokenAccessDeniedHandler))"
                 /// above is deprecated.
                 .oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer
-                                -> httpSecurityOAuth2ResourceServerConfigurer
-                                .jwt(Customizer.withDefaults()))
+                        -> httpSecurityOAuth2ResourceServerConfigurer
+                        .accessDeniedHandler(this.customBearerTokenAccessDeniedHandler)
+                        .authenticationEntryPoint(this.customBearerTokenAuthenticationEntryPoint)
+                        .jwt(Customizer.withDefaults()))
                 /// method ".oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer
                 ///                                 -> httpSecurityOAuth2ResourceServerConfigurer
                 ///                                 .jwt(Customizer.withDefaults()))" above

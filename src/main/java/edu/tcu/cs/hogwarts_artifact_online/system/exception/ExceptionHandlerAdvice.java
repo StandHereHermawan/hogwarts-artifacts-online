@@ -4,8 +4,12 @@ import edu.tcu.cs.hogwarts_artifact_online.system.Result;
 import edu.tcu.cs.hogwarts_artifact_online.system.StatusCode;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 
@@ -26,13 +30,48 @@ public class ExceptionHandlerAdvice {
         return new Result(false, StatusCode.NOT_FOUND, exception.getMessage());
     }
 
-    @ExceptionHandler({UsernameNotFoundException.class, BadCredentialsException.class})
+    @ExceptionHandler({
+            UsernameNotFoundException.class,
+            BadCredentialsException.class,
+            InsufficientAuthenticationException.class
+    })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     Result handleAuthenticationException(Exception exception) {
         return new Result(
                 false,
                 StatusCode.UNAUTHORIZED,
-                "Username or Password is incorrect");
+                "Username or Password is incorrect",
+                exception.getMessage());
+    }
+
+    @ExceptionHandler(AccountStatusException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    Result handleAccountStatusException(AccountStatusException exception) {
+        return new Result(
+                false,
+                StatusCode.UNAUTHORIZED,
+                "User is abnormal.",
+                exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidBearerTokenException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    Result handleInvalidBearerTokenException(InvalidBearerTokenException exception) {
+        return new Result(
+                false,
+                StatusCode.UNAUTHORIZED,
+                "The access token provided is expired, revoked, malformed or invalid for other reasons.",
+                exception.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    Result handleAccessDeniedException(AccessDeniedException exception) {
+        return new Result(
+                false,
+                StatusCode.FORBIDDEN,
+                "No permission.",
+                exception.getMessage());
     }
 
     /**
@@ -55,5 +94,22 @@ public class ExceptionHandlerAdvice {
                 StatusCode.INVALID_ARGUMENT,
                 "Provided arguments are invalid, see data for details.",
                 map);
+    }
+
+    /**
+     * This method handles all unhandled exceptions.
+     * As fallback unhandled methods.
+     *
+     * @param exception
+     * @return new Result
+     */
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    Result handleOtherException(Exception exception) {
+        return new Result(
+                false,
+                StatusCode.INTERNAL_SERVER_ERROR,
+                "A server internal error occurs.",
+                exception.getMessage());
     }
 }
