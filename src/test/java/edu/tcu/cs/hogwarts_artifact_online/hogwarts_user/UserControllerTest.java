@@ -32,6 +32,7 @@ import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
+/// "@AutoConfigureMockMvc(addFilters = false)" means turn off Spring Security
 class UserControllerTest {
 
     @MockitoBean
