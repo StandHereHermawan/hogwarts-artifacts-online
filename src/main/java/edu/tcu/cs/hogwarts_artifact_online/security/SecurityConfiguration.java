@@ -118,6 +118,7 @@ public class SecurityConfiguration {
                 /// expected solution for the deprecated "headers.frameOptions().disable()" method.
                 ///
                 .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
                 .httpBasic(httpSecurityHttpBasicConfigurer
                         -> httpSecurityHttpBasicConfigurer
                         .authenticationEntryPoint(this.customBasicAuthenticationEntryPoint))
