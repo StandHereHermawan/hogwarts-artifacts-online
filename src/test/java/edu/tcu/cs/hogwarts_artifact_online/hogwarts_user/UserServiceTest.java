@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,9 @@ class UserServiceTest {
 
     @Mock
     UserRepository userRepository;
+
+    @Mock
+    PasswordEncoder passwordEncoder;
 
     @InjectMocks
     UserService userService;
@@ -176,7 +180,14 @@ class UserServiceTest {
             newUser.setEnabled(true);
             newUser.setRoles("user");
         }
+        String encodedPassword;
+        {
+            /// This is not a encoded password, it just normal defined string.
+            /// with purpose as mocking of BCrypt hashed password.
+            encodedPassword = "Encoded Password";
+        }
         ///
+        given(this.passwordEncoder.encode(newUser.getPassword())).willReturn(encodedPassword);
         given(this.userRepository.save(newUser))
                 .willReturn(newUser);
         /// End of Given Section.
@@ -188,7 +199,7 @@ class UserServiceTest {
         /// Then Section. Assert expected output and verify called methods.
         assertThat(returnedUser.getId()).isEqualTo(newUser.getId());
         assertThat(returnedUser.getUsername()).isEqualTo(newUser.getUsername());
-        assertThat(returnedUser.getPassword()).isEqualTo(newUser.getPassword());
+        assertThat(returnedUser.getPassword()).isEqualTo(encodedPassword);
         assertThat(returnedUser.isEnabled()).isEqualTo(newUser.isEnabled());
         assertThat(returnedUser.getRoles()).isEqualTo(newUser.getRoles());
         /// Verify methods gettin called once.

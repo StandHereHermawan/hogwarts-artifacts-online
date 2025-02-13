@@ -35,7 +35,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
+/// "@AutoConfigureMockMvc(addFilters = false)" means turn off Spring Security
 class ArtifactControllerTest {
 
     /// annotation "@MockBean" /// Deprecated in the future, but used in Bingyang's Spring Boot 3 Course.

@@ -118,10 +118,11 @@ public class UserController {
     public Result deleteUser(@PathVariable
                              Integer userId) {
         HogwartsUser deletedHogwartsUser = this.userService.delete(userId);
+        HogwartsUserDTO hogwartsUserDTO = this.userToUserDtoConverter.convert(deletedHogwartsUser);
         return new Result(
                 true,
                 StatusCode.SUCCESS,
                 "Delete Hogwarts User Success.",
-                deletedHogwartsUser);
+                hogwartsUserDTO);
     }
 }
