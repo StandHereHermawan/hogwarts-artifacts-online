@@ -1,0 +1,1 @@
+docker run -d -p 8080:8080 tcu/hogwarts_artifact_online:1.0

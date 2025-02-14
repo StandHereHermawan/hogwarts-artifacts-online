@@ -2,7 +2,7 @@
  This is a ***Code Along Project*** from **Mr. Bingyang Wei** Learning Spring Framework in [Youtube](https://www.youtube.com/watch?v=W7xJf5Wknho&list=PLqq9AhcMm2oPdXXFT3fzjaKLsVymvMXaY&index=12) with project based learning approach. This project are from 12th episode of his playlist video.
 
 # hogwarts-artifacts-online
-![](/img/img.png)
+![](/docs/img/img.png)
 
 ## requirements
 user stories    
