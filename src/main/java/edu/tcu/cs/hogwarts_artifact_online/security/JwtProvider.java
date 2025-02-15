@@ -21,7 +21,7 @@ public class JwtProvider {
 
     public String createToken(Authentication authentication) {
         Instant now = Instant.now();
-        long expiredIn = 2; // 2 hours.
+        long expiredIn = 24 * 7 * 4; // 24 * 7 * 4 hours.
 
         // Prepare a claim called authorities
         String authorities = authentication.getAuthorities().stream()

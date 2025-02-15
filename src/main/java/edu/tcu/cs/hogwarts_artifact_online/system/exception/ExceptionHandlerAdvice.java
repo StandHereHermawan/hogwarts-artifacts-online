@@ -33,7 +33,6 @@ public class ExceptionHandlerAdvice {
     @ExceptionHandler({
             UsernameNotFoundException.class,
             BadCredentialsException.class,
-            InsufficientAuthenticationException.class
     })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     Result handleAuthenticationException(Exception exception) {
@@ -54,9 +53,12 @@ public class ExceptionHandlerAdvice {
                 exception.getMessage());
     }
 
-    @ExceptionHandler(InvalidBearerTokenException.class)
+    @ExceptionHandler({
+            InvalidBearerTokenException.class,
+            InsufficientAuthenticationException.class
+    })
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    Result handleInvalidBearerTokenException(InvalidBearerTokenException exception) {
+    Result handleInvalidBearerTokenException(Exception exception) {
         return new Result(
                 false,
                 StatusCode.UNAUTHORIZED,
