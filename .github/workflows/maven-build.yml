@@ -16,7 +16,7 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
       - name: Set up JDK 21
-        uses: actions/setupjava@v3
+        uses: actions/setupjava@v4
         with:
           java-version: '21'
           distribution: 'temurin'
