@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.tcu.cs.hogwarts_artifact_online.system.StatusCode;
 
+import edu.tcu.cs.hogwarts_artifact_online.system.exception.ObjectNotFoundException;
 import org.hamcrest.Matchers;
 
 import org.json.JSONObject;
@@ -30,111 +31,116 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
-@AutoConfigureMockMvc
-/// Spring Security Is On
-@DisplayName("Integration tests for API endpoints")
+@AutoConfigureMockMvc /// Spring Security Is On
+@DisplayName("Integration tests for HogwartsUser API endpoints")
 @Tag("Integration")
 public class HogwartsUserControllerIntegrationTest {
 
     @Autowired
-    MockMvc mockMvc;
+    private MockMvc mockMvc;
 
     @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     @Value("${api.endpoint.base-url}")
-    String baseUrl;
+    private String baseUrl;
 
     @Value("/users")
-    String userGeneralUrl;
+    private String userGeneralUrl;
 
     @Value("/users/")
-    String userSpecificUrl;
+    private String userSpecificUrl;
 
-    String jsonWebTokenAdminPrivilege;
+    private String jsonWebTokenAdminPrivilege;
 
-    String jsonWebTokenNormalUserPrivilege;
+    private String jsonWebTokenNormalUserPrivilege;
 
     @Value("Find All Hogwarts User Success.")
-    String successFindAllUserMessage;
+    private String successFindAllUserMessage;
 
     @Value("Find One Hogwarts User Success.")
-    String successFindOneUserMessage;
+    private String successFindOneUserMessage;
 
     @Value("Add Hogwarts User Success.")
-    String successAddOneUserMessage;
+    private String successAddOneUserMessage;
 
     @Value("Update Hogwarts User Success.")
-    String successUpdateAnUserMessage;
+    private String successUpdateAnUserMessage;
 
     @Value("Delete Hogwarts User Success.")
-    String successDeleteAnUserMessage;
+    private String successDeleteAnUserMessage;
 
     @Value("No permission.")
-    String notAuthorizedMessage;
+    private String notAuthorizedMessage;
 
     @Value("Access Denied")
-    String accessDeniedMessage;
+    private String accessDeniedMessage;
+
+    private String hogwartsUserNotFoundMessage;
+
+    @Value("Provided arguments are invalid, see data for details.")
+    private String invalidArgumentsMessage;
+
+    private int numbersDataAsInDBInitializarer = 3;
+
+    private int numbersDataAsPlusOne = 4;
 
     @BeforeEach
     void setUp() throws Exception {
-        /// Privillege Admin Token
-        {
-            ResultActions resultActionsAdminPrivillege;
-            {
-                resultActionsAdminPrivillege = this.mockMvc
-                        .perform(post(this.baseUrl + this.userSpecificUrl + "login")
-                                .with(httpBasic("Agus", "123456")));
-            }
+        hogwartsUserNotFoundMessage = HogwartsUser.class.getSimpleName().toLowerCase();
 
-            MvcResult mvcResult = resultActionsAdminPrivillege
-                    .andDo(print())
-                    .andReturn();
-
-            String responseContentAsString = mvcResult
-                    .getResponse()
-                    .getContentAsString();
-            /// JSON on 12 code line below are JSON response from AuthController.
-            /// "flag": true,
-            /// "code": 200,
-            /// "message": "User Info and Json Web Token",
-            /// "data": {
-            ///     "userInfo": {
-            ///         "id": 1,
-            ///         "username": "Agus",
-            ///         "enabled": true,
-            ///         "roles": "admin user"
-            ///     },
-            ///     token: "exampleJsonWebToken"
-            /// }
-            ///
-            JSONObject json = new JSONObject(responseContentAsString);
-            this.jsonWebTokenAdminPrivilege = "Bearer " + json
-                    .getJSONObject("data")
-                    .getString("token");
-        }
         /// Privillege Normal User Token
-        {
-            ResultActions resultActionsNormalUserPrivilege;
-            {
-                resultActionsNormalUserPrivilege = this.mockMvc
-                        .perform(post(this.baseUrl + this.userSpecificUrl + "login")
-                                .with(httpBasic("Adang", "654321")));
-            }
+        ResultActions resultActionsNormalUserPrivilege;
+        resultActionsNormalUserPrivilege = this.mockMvc
+                .perform(post(this.baseUrl + "/users/login")
+                        .with(httpBasic("Adang", "654321")));
 
-            MvcResult mvcResultNormalUserPrivilege = resultActionsNormalUserPrivilege
-                    .andDo(print())
-                    .andReturn();
+        MvcResult mvcResultNormalUserPrivilege = resultActionsNormalUserPrivilege
+                .andDo(print())
+                .andReturn();
 
-            String responseContentAsStringNormalUser = mvcResultNormalUserPrivilege
-                    .getResponse()
-                    .getContentAsString();
+        String responseContentAsStringNormalUser = mvcResultNormalUserPrivilege
+                .getResponse()
+                .getContentAsString();
 
-            JSONObject jsonNormalUserResponse = new JSONObject(responseContentAsStringNormalUser);
-            this.jsonWebTokenNormalUserPrivilege = "Bearer " + jsonNormalUserResponse
-                    .getJSONObject("data")
-                    .getString("token");
-        }
+        System.err.println("Response Content As String User: " + responseContentAsStringNormalUser);
+        JSONObject jsonNormalUserResponse = new JSONObject(responseContentAsStringNormalUser);
+        System.err.println("Normal User privilege: "+jsonNormalUserResponse);
+        String tokenNormalUserWithoutPrefix = jsonNormalUserResponse
+                .getJSONObject("data")
+                .getString("token");
+
+        this.jsonWebTokenNormalUserPrivilege = "Bearer " + tokenNormalUserWithoutPrefix;
+
+        /// Privillege Admin Token
+        ResultActions resultActionsAdminPrivilege;
+        resultActionsAdminPrivilege = this.mockMvc.perform(post(this.baseUrl + "/users/login")
+                .with(httpBasic("Agus", "123456")));
+
+        MvcResult mvcResultAdminPrivilege = resultActionsAdminPrivilege.andDo(print()).andReturn();
+        String responseContentAsString = mvcResultAdminPrivilege.getResponse().getContentAsString();
+        /// JSON on 12 code line below are JSON response from AuthController.
+        /// "flag": true,
+        /// "code": 200,
+        /// "message": "User Info and Json Web Token",
+        /// "data": {
+        ///     "userInfo": {
+        ///         "id": 1,
+        ///         "username": "Agus",
+        ///         "enabled": true,
+        ///         "roles": "admin user"
+        ///     },
+        ///     token: "exampleJsonWebToken"
+        /// }
+        ///
+        System.err.println("Response Content As String Admin: " + responseContentAsString);
+        JSONObject jsonAdminPrivilege = new JSONObject(responseContentAsString);
+        System.err.println("Admin privilege: "+jsonAdminPrivilege);
+        String tokenWithoutPrefix = jsonAdminPrivilege
+                .getJSONObject("data")
+                .getString("token");
+
+        this.jsonWebTokenAdminPrivilege = "Bearer " + tokenWithoutPrefix; // add "Bearer " prefix.
     }
 
     @AfterEach
@@ -143,10 +149,11 @@ public class HogwartsUserControllerIntegrationTest {
         this.jsonWebTokenNormalUserPrivilege = null;
     }
 
-    @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     /// Annotation "@DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD" for reset the H2 database
     /// to default database content provided by database seeder before the method gets called.
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check findAllHogwartsUser with admin privilege (GET)")
     void testFindAllHogwartsUsersUsingAdminPrivilegeSuccess() throws Exception {
         this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
                         .header("Authorization", this.jsonWebTokenAdminPrivilege)
@@ -154,66 +161,12 @@ public class HogwartsUserControllerIntegrationTest {
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
                 .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(3)))
-        ;
+                .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
     }
 
-    @Test
-    @DisplayName("Check addHogwartsUser with valid input (POST)")
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
-    void testAddNewHogwartsUserUsingAdminPrivilegeSuccess() throws Exception {
-        HogwartsUser hogwartsUser;
-        {
-            hogwartsUser = new HogwartsUser();
-            hogwartsUser.setUsername("Adang");
-            hogwartsUser.setRoles("user");
-            hogwartsUser.setEnabled(true);
-            hogwartsUser.setPassword("123456");
-        }
-
-        String jsonHogwartsUser;
-        {
-            jsonHogwartsUser = this.objectMapper.writeValueAsString(hogwartsUser);
-        }
-
-        /// Check hogwarts data in database before integration test operation.
-        {
-            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
-                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
-                            .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.flag").value(true))
-                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
-                    .andExpect(jsonPath("$.data", Matchers.hasSize(3)));
-        }
-
-        this.mockMvc.perform(post(this.baseUrl + this.userGeneralUrl)
-                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
-                        .content(jsonHogwartsUser)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.flag").value(true))
-                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                .andExpect(jsonPath("$.message").value(this.successAddOneUserMessage))
-                .andExpect(jsonPath("$.data.id").isNotEmpty())
-                .andExpect(jsonPath("$.data.username").value(hogwartsUser.getUsername()))
-                .andExpect(jsonPath("$.data.roles").value(hogwartsUser.getRoles()))
-                .andExpect(jsonPath("$.data.enabled").value(hogwartsUser.isEnabled()));
-
-        /// Check hogwarts data in database after integration test operation.
-        {
-            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
-                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
-                            .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.flag").value(true))
-                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
-                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
-                    .andExpect(jsonPath("$.data", Matchers.hasSize(4)));
-        }
-    }
-
     @Test
-    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @DisplayName("Check findHogwartsUserById using admin privilege with valid input (GET)")
     void testFindHogwartsUserByIdUsingAdminPrivilegeSuccess() throws Exception {
         HogwartsUser hogwartsUser;
         {
@@ -259,7 +212,7 @@ public class HogwartsUserControllerIntegrationTest {
                     .andExpect(jsonPath("$.flag").value(true))
                     .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
                     .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
-                    .andExpect(jsonPath("$.data", Matchers.hasSize(4)));
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsPlusOne)));
         }
 
         this.mockMvc.perform(get(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
@@ -272,11 +225,192 @@ public class HogwartsUserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.username").value(hogwartsUser.getUsername()))
                 .andExpect(jsonPath("$.data.roles").value(hogwartsUser.getRoles()))
                 .andExpect(jsonPath("$.data.enabled").value(hogwartsUser.isEnabled()));
+
+        /// Delete operation.
+        this.mockMvc.perform(delete(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(this.successDeleteAnUserMessage))
+                .andExpect(jsonPath("$.data.id").value(hogwartsUserId))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
+        /// Check hogwartsUser data in database after delete operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
     }
 
-    @Test
-    @DisplayName("Check updateHogwartsUser with valid input (PUT)")
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check findHogwartsUserById using admin privilege with invalid input (GET)")
+    void testFindHogwartsUserByIdUsingAdminPrivilegeNotFound() throws Exception {
+        String hogwartsUserId = "123456789";
+
+        this.mockMvc.perform(get(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value(
+                        new ObjectNotFoundException(this.hogwartsUserNotFoundMessage, hogwartsUserId).getMessage()
+                ));
+        /// Check hogwartsUser data in database after delete operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
+    }
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check addHogwartsUser with admin privilege and valid input (POST)")
+    void testAddNewHogwartsUserUsingAdminPrivilegeSuccess() throws Exception {
+        HogwartsUser hogwartsUser;
+        {
+            hogwartsUser = new HogwartsUser();
+            hogwartsUser.setUsername("Adang");
+            hogwartsUser.setRoles("user");
+            hogwartsUser.setEnabled(true);
+            hogwartsUser.setPassword("123456");
+        }
+
+        String jsonHogwartsUser;
+        {
+            jsonHogwartsUser = this.objectMapper.writeValueAsString(hogwartsUser);
+        }
+
+        /// Check hogwarts data in database before integration test operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
+
+        ResultActions resultActions = this.mockMvc.perform(post(this.baseUrl + this.userGeneralUrl)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .content(jsonHogwartsUser)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(this.successAddOneUserMessage))
+                .andExpect(jsonPath("$.data.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.username").value(hogwartsUser.getUsername()))
+                .andExpect(jsonPath("$.data.roles").value(hogwartsUser.getRoles()))
+                .andExpect(jsonPath("$.data.enabled").value(hogwartsUser.isEnabled()));
+
+        int hogwartsUserId = new JSONObject(resultActions
+                .andDo(print())
+                .andReturn()
+                .getResponse()
+                .getContentAsString())
+                .getJSONObject("data")
+                .getInt("id");
+
+        /// Check hogwarts data in database after integration test operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsPlusOne)));
+        }
+
+        /// Delete operation.
+        this.mockMvc.perform(delete(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(this.successDeleteAnUserMessage))
+                .andExpect(jsonPath("$.data.id").value(hogwartsUserId))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
+        /// Check hogwartsUser data in database after delete operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
+    }
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check addHogwartsUser with admin privilege and invalid input (POST)")
+    void testAddNewHogwartsUserUsingAdminPrivilegeValidationError() throws Exception {
+        HogwartsUser hogwartsUser;
+        {
+            hogwartsUser = new HogwartsUser();
+            hogwartsUser.setUsername("");
+            hogwartsUser.setRoles("");
+            hogwartsUser.setEnabled(true);
+            hogwartsUser.setPassword("");
+        }
+
+        String jsonHogwartsUser;
+        {
+            jsonHogwartsUser = this.objectMapper.writeValueAsString(hogwartsUser);
+        }
+
+        /// Check hogwarts data in database before integration test operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
+
+        this.mockMvc.perform(post(this.baseUrl + this.userGeneralUrl)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .content(jsonHogwartsUser)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.INVALID_ARGUMENT))
+                .andExpect(jsonPath("$.message").value(this.invalidArgumentsMessage))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
+        /// Check hogwarts data in database after this integration test method operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
+    }
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check updateHogwartsUser with admin privilege and valid input (PUT)")
     void testUpdateHogwartsUserUsingAdminPrivilegeSuccess() throws Exception {
         HogwartsUser hogwartsUser;
         {
@@ -323,7 +457,7 @@ public class HogwartsUserControllerIntegrationTest {
                     .andExpect(jsonPath("$.flag").value(true))
                     .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
                     .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
-                    .andExpect(jsonPath("$.data", Matchers.hasSize(4)));
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsPlusOne)));
         }
 
         HogwartsUser updatedHogwartsUser;
@@ -352,11 +486,171 @@ public class HogwartsUserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.username").value(updatedHogwartsUser.getUsername()))
                 .andExpect(jsonPath("$.data.roles").value(updatedHogwartsUser.getRoles()))
                 .andExpect(jsonPath("$.data.enabled").value(updatedHogwartsUser.isEnabled()));
+
+        /// Delete operation.
+        this.mockMvc.perform(delete(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(this.successDeleteAnUserMessage))
+                .andExpect(jsonPath("$.data.id").value(hogwartsUserId))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
+        /// Check hogwartsUser data in database after delete operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
     }
 
-    @Test
-    @DisplayName("Check deleteWizard with valid input (DELETE)")
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check updateHogwartsUser with admin privilege and invalid input (PUT)")
+    void testUpdateHogwartsUserUsingAdminPrivilegeButHogwartsUserNotFound() throws Exception {
+        String hogwartsUserId = "123456789";
+
+        HogwartsUser updatedHogwartsUser;
+        {
+            updatedHogwartsUser = new HogwartsUser();
+            updatedHogwartsUser.setUsername("Adang Update");
+            updatedHogwartsUser.setRoles("user");
+            updatedHogwartsUser.setEnabled(true);
+        }
+
+        String updatedWizardJson;
+        {
+            updatedWizardJson = this.objectMapper.writeValueAsString(updatedHogwartsUser);
+        }
+
+        this.mockMvc.perform(put(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updatedWizardJson)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value(
+                        new ObjectNotFoundException(this.hogwartsUserNotFoundMessage, hogwartsUserId)
+                                .getMessage()));
+
+        /// Check hogwartsUser data in database after delete operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
+    }
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check updateHogwartsUser with admin privilege and invalid input (PUT)")
+    void testUpdateHogwartsUserUsingAdminPrivilegeInvalidArguments() throws Exception {
+        HogwartsUser hogwartsUser;
+        {
+            hogwartsUser = new HogwartsUser();
+            hogwartsUser.setUsername("Adang");
+            hogwartsUser.setRoles("user");
+            hogwartsUser.setEnabled(true);
+            hogwartsUser.setPassword("123456");
+        }
+
+        String jsonHogwartsUser;
+        {
+            jsonHogwartsUser = this.objectMapper.writeValueAsString(hogwartsUser);
+        }
+
+        /// Check seeder data does its already in database or not.
+        ResultActions resultActions = this.mockMvc.perform(
+                        post(this.baseUrl + this.userGeneralUrl)
+                                .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                                .content(jsonHogwartsUser)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(this.successAddOneUserMessage))
+                .andExpect(jsonPath("$.data.id").isNotEmpty())
+                .andExpect(jsonPath("$.data.username").value(hogwartsUser.getUsername()))
+                .andExpect(jsonPath("$.data.roles").value(hogwartsUser.getRoles()))
+                .andExpect(jsonPath("$.data.enabled").value(hogwartsUser.isEnabled()));
+
+        MvcResult mvcResult = resultActions.andDo(print()).andReturn();
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        JSONObject jsonResponseFromAddWizard = new JSONObject(contentAsString);
+
+        String hogwartsUserId = jsonResponseFromAddWizard
+                .getJSONObject("data")
+                .getString("id");
+
+        /// Check hogwarts data in database before integration test operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsPlusOne)));
+        }
+
+        HogwartsUser updatedHogwartsUser;
+        {
+            updatedHogwartsUser = new HogwartsUser();
+            updatedHogwartsUser.setUsername("");
+            updatedHogwartsUser.setRoles("");
+            updatedHogwartsUser.setEnabled(true);
+        }
+
+        String updatedWizardJson;
+        {
+            updatedWizardJson = this.objectMapper.writeValueAsString(updatedHogwartsUser);
+        }
+
+        this.mockMvc.perform(put(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updatedWizardJson)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.INVALID_ARGUMENT))
+                .andExpect(jsonPath("$.message").value(this.invalidArgumentsMessage))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
+        /// Delete operation.
+        this.mockMvc.perform(delete(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(this.successDeleteAnUserMessage))
+                .andExpect(jsonPath("$.data.id").value(hogwartsUserId))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
+        /// Check hogwartsUser data in database after delete operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
+    }
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check deleteHogwartsUser with admin privilege and valid input (DELETE)")
     void testDeleteHogwartsUserUsingAdminPrivilegeSuccess() throws Exception {
         HogwartsUser hogwartsUser;
         {
@@ -399,7 +693,7 @@ public class HogwartsUserControllerIntegrationTest {
                     .andExpect(jsonPath("$.flag").value(true))
                     .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
                     .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
-                    .andExpect(jsonPath("$.data", Matchers.hasSize(4)));
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsPlusOne)));
         }
 
         String hogwartsUserId = jsonResponseFromAddWizard
@@ -423,44 +717,42 @@ public class HogwartsUserControllerIntegrationTest {
                     .andExpect(jsonPath("$.flag").value(true))
                     .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
                     .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
-                    .andExpect(jsonPath("$.data", Matchers.hasSize(3)));
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
         }
     }
 
-    @Test
-    @DisplayName("Check findAllHogwartsUsers with invalid token (GET)")
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
-    void testFindAllHogwartsUsersUsingNormalUserPrivilege() throws Exception {
-        this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
-                        .header("Authorization", this.jsonWebTokenNormalUserPrivilege)
+    @Test
+    @DisplayName("Check deleteHogwartsUser with admin privilege but invalid input (DELETE)")
+    void testDeleteHogwartsUserUsingAdminPrivilegeNotFound() throws Exception {
+        String hogwartsUserId = "123456789";
+
+        this.mockMvc.perform(delete(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
-                .andExpect(jsonPath("$.code").value(StatusCode.FORBIDDEN))
-                .andExpect(jsonPath("$.message").value(this.notAuthorizedMessage))
-                .andExpect(jsonPath("$.data").value(this.accessDeniedMessage))
-        ;
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value(
+                        new ObjectNotFoundException(this.hogwartsUserNotFoundMessage, hogwartsUserId)
+                                .getMessage()));
+
+        /// Check hogwarts data in database after integration test operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
     }
 
-    @Test
-    @DisplayName("Check addHogwartsUser with invalid token (POST)")
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
-    void testAddNewHogwartsUserUsingNormalUserPrivilege() throws Exception {
-        HogwartsUser hogwartsUser;
-        {
-            hogwartsUser = new HogwartsUser();
-            hogwartsUser.setUsername("Adang");
-            hogwartsUser.setRoles("user");
-            hogwartsUser.setEnabled(true);
-            hogwartsUser.setPassword("123456");
-        }
-
-        String jsonHogwartsUser;
-        {
-            jsonHogwartsUser = this.objectMapper.writeValueAsString(hogwartsUser);
-        }
-
-        this.mockMvc.perform(post(this.baseUrl + this.userGeneralUrl)
-                        .content(jsonHogwartsUser)
+    @Test
+    @DisplayName("Check findAllHogwartsUsers with normal user privilege (GET)")
+    void testFindAllHogwartsUsersUsingNormalUserPrivilege() throws Exception {
+        this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
                         .header("Authorization", this.jsonWebTokenNormalUserPrivilege)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -469,8 +761,9 @@ public class HogwartsUserControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").value(this.accessDeniedMessage));
     }
 
-    @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check findHogwartsUserById normal user privilege but valid input (GET)")
     void testFindHogwartsUserByIdUsingNormalUserPrivilege() throws Exception {
         HogwartsUser hogwartsUser;
         {
@@ -514,12 +807,33 @@ public class HogwartsUserControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(StatusCode.FORBIDDEN))
                 .andExpect(jsonPath("$.message").value(this.notAuthorizedMessage))
                 .andExpect(jsonPath("$.data").value(this.accessDeniedMessage));
+
+        /// Delete operation.
+        this.mockMvc.perform(delete(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(this.successDeleteAnUserMessage))
+                .andExpect(jsonPath("$.data.id").value(hogwartsUserId))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
+        /// Check hogwartsUser data in database after delete operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
     }
 
-    @Test
-    @DisplayName("Check updateHogwartsUser with invalid token (PUT)")
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
-    void testUpdateHogwartsUserUsingNormalUserPrivilege() throws Exception {
+    @Test
+    @DisplayName("Check addHogwartsUser with normal user privilege (POST)")
+    void testAddNewHogwartsUserUsingNormalUserPrivilege() throws Exception {
         HogwartsUser hogwartsUser;
         {
             hogwartsUser = new HogwartsUser();
@@ -527,6 +841,34 @@ public class HogwartsUserControllerIntegrationTest {
             hogwartsUser.setRoles("user");
             hogwartsUser.setEnabled(true);
             hogwartsUser.setPassword("123456");
+        }
+
+        String jsonHogwartsUser;
+        {
+            jsonHogwartsUser = this.objectMapper.writeValueAsString(hogwartsUser);
+        }
+
+        this.mockMvc.perform(post(this.baseUrl + this.userGeneralUrl)
+                        .content(jsonHogwartsUser)
+                        .header("Authorization", this.jsonWebTokenNormalUserPrivilege)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.FORBIDDEN))
+                .andExpect(jsonPath("$.message").value(this.notAuthorizedMessage))
+                .andExpect(jsonPath("$.data").value(this.accessDeniedMessage));
+    }
+
+    @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+    @Test
+    @DisplayName("Check updateHogwartsUser with normal user privilege (PUT)")
+    void testUpdateHogwartsUserUsingNormalUserPrivilege() throws Exception {
+        HogwartsUser hogwartsUser;
+        {
+            hogwartsUser = new HogwartsUser();
+            hogwartsUser.setUsername("Bedo");
+            hogwartsUser.setRoles("user");
+            hogwartsUser.setEnabled(true);
+            hogwartsUser.setPassword("12345678");
         }
 
         String jsonHogwartsUser;
@@ -560,7 +902,7 @@ public class HogwartsUserControllerIntegrationTest {
         HogwartsUser updatedHogwartsUser;
         {
             updatedHogwartsUser = new HogwartsUser();
-            updatedHogwartsUser.setUsername("Adang Update");
+            updatedHogwartsUser.setUsername("Bedo Update");
             updatedHogwartsUser.setRoles("user");
             updatedHogwartsUser.setEnabled(true);
         }
@@ -579,12 +921,33 @@ public class HogwartsUserControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(StatusCode.FORBIDDEN))
                 .andExpect(jsonPath("$.message").value(this.notAuthorizedMessage))
                 .andExpect(jsonPath("$.data").value(this.accessDeniedMessage));
+
+        /// Delete operation.
+        this.mockMvc.perform(delete(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(this.successDeleteAnUserMessage))
+                .andExpect(jsonPath("$.data.id").value(hogwartsUserId))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
+        /// Check hogwartsUser data in database after delete operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
     }
 
-    @Test
-    @DisplayName("Check deleteWizard with invalid token (DELETE)")
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
-    void testDeleteHogwartsUserUsingNormalUserPrivilegeSuccess() throws Exception {
+    @Test
+    @DisplayName("Check deleteWizard with normal user privilege and valid input (DELETE)")
+    void testDeleteHogwartsUserUsingNormalUserPrivilege() throws Exception {
         HogwartsUser hogwartsUser;
         {
             hogwartsUser = new HogwartsUser();
@@ -628,5 +991,25 @@ public class HogwartsUserControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(StatusCode.FORBIDDEN))
                 .andExpect(jsonPath("$.message").value(this.notAuthorizedMessage))
                 .andExpect(jsonPath("$.data").value(this.accessDeniedMessage));
+
+        this.mockMvc.perform(delete(this.baseUrl + this.userSpecificUrl + hogwartsUserId)
+                        .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value(this.successDeleteAnUserMessage))
+                .andExpect(jsonPath("$.data.id").value(hogwartsUserId))
+                .andExpect(jsonPath("$.data").isNotEmpty());
+
+        /// Check hogwarts data in database after integration test operation.
+        {
+            this.mockMvc.perform(get(this.baseUrl + this.userGeneralUrl)
+                            .header("Authorization", this.jsonWebTokenAdminPrivilege)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.flag").value(true))
+                    .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                    .andExpect(jsonPath("$.message").value(this.successFindAllUserMessage))
+                    .andExpect(jsonPath("$.data", Matchers.hasSize(this.numbersDataAsInDBInitializarer)));
+        }
     }
 }
