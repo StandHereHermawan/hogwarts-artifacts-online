@@ -243,6 +243,39 @@ class WizardServiceTest {
     }
 
     @Test
+    void testUpdateAnWizardNotFoundScenario() {
+        /// Given Section.
+        String wizardId;
+        {
+            wizardId = "100";
+        }
+        ///
+        Wizard newerVersionWizard;
+        {
+            newerVersionWizard = new Wizard();
+            newerVersionWizard.setId(4);
+            newerVersionWizard.setName("Agus Dumbledore");
+            newerVersionWizard.setArtifacts(null);
+        }
+        /// Define behavior of findById method from wizardRepository.
+        given(this.wizardRepository.findById(Integer.valueOf(wizardId)))
+                .willReturn(Optional.empty());
+        /// End of Given Section.
+
+        /// When Section.
+        assertThrows(ObjectNotFoundException.class, () -> {
+            this.wizardService.update(wizardId, newerVersionWizard);
+        });
+        /// End of When Section.
+
+        /// Then Section.
+        /// Verify Method gets called.
+        verify(this.wizardRepository, times(1))
+                .findById(Integer.parseInt(wizardId));
+        /// End of Then Section.
+    }
+
+    @Test
     void testDeleteAnWizardSuccessScenario() {
         /// Given Section.
         Wizard wizard;
@@ -274,7 +307,7 @@ class WizardServiceTest {
     }
 
     @Test
-    void testDeleteAnWizardNotFoundScenatio() {
+    void testDeleteAnWizardNotFoundScenario() {
         /// Given Section.
         String wizardId;
         {
