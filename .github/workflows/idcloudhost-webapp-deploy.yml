@@ -72,10 +72,6 @@ jobs:
             echo "SSH_PRIVATE_KEY is set."
           fi
 
-      - name: Check SSH Key Fingerprint
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | ssh-keygen -l -f -
-
       - name: Test SSH Connection
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
