@@ -63,6 +63,27 @@ jobs:
         run: |
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Debug SSH Key
+        run: |
+          if [[ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]]; then
+            echo "SSH_PRIVATE_KEY is empty or not set!"
+            exit 1
+          else
+            echo "SSH_PRIVATE_KEY is set."
+          fi
+
+      - name: Check SSH Key Fingerprint
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | ssh-keygen -l -f -
+
+      - name: Test SSH Connection
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH Connection Successful!'"
+
       - name: Install Docker on VPS
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
