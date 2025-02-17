@@ -45,7 +45,6 @@ jobs:
           tags: ghcr.io/${{ env.REPO }}:${{ github.sha }}
           file: ./Dockerfile
 
-          
   deploy:
     runs-on: ubuntu-22.04
 
@@ -62,4 +61,34 @@ jobs:
 
       - name: SSH into VPS and run command
         run: |
-          ssh -o StrictHostKeyChecking=no {{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "echo 'Connected successfully!'"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} "echo 'Connected successfully!'"
+
+      - name: Check if Docker is installed
+        run: |
+          if ! command -v docker &> /dev/null
+          then
+            echo "Docker is not installed. Installing Docker..."
+            sudo apt-get update
+            sudo apt-get install -y docker.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
+          else
+            echo "Docker is already installed."
+            sudo systemctl start docker
+            sudo systemctl enable docker
+          fi
+
+      - name: Pull Docker image from GitHub Container Registry
+        run: |
+          echo "Pull Docker image from GitHub Container Registry..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          sudo docker pull ghcr.io/${{ env.REPO }}:${{ github.sha }}
+          EOF
+
+      - name: Deploy the Docker container to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+          sudo docker stop ${{ env.IDCLOUDHOST_WEBAPP_NAME }} || true
+          sudo docker rm ${{ env.IDCLOUDHOST_WEBAPP_NAME }} || true
+          sudo docker run -d --name ${{ env.IDCLOUDHOST_WEBAPP_NAME }} ghcr.io/${{ env.REPO }}:${{ github.sha }}
+          EOF
