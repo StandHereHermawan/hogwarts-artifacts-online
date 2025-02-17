@@ -14,5 +14,3 @@ COPY --from=builder application/application/ ./
 # check MANIFEST.MF Files first then copy the Main-Class: value to
 # "ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]".
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
-
-EXPOSE 8080
