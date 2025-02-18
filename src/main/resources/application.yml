@@ -2,15 +2,15 @@ spring:
   # Start For accessing protected endpoints by spring security
   security:
     user:
-      name: user
-      password: rahasia
+      name: ${SPRING_USER_NAME:user}
+      password: ${SPRING_USER_PASSWORD:rahasia}
   # End line For accessing protected endpoints by spring security
   application:
-    name: hogwarts_artifact_online
+    name: ${SPRING_APPLICATION_NAME:hogwarts_artifact_online}
   datasource:
     url: jdbc:h2:mem:hogwarts
-    username: sa
-    password:
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: org.h2.Driver
   # To show sql log
   jpa:
@@ -20,6 +20,11 @@ spring:
   web:
     resources:
       add-mappings: false
+  h2:
+    console:
+      enabled: true
 api:
   endpoint:
-    base-url: /api/v1
+    base-url: ${API_ENDPOINT_BASE_URL:/api/v1}
+server:
+  port: ${SERVER_PORT:8080}
