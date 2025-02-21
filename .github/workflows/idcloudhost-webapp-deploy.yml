@@ -3,6 +3,8 @@ name: Build and deploy a container to an IdCloudHost Web App
 env:
   IDCLOUDHOST_WEBAPP_NAME: hogwarts-artifact-online-staging
   DEPLOYING_BRANCH: staging
+  CONTAINER_PORT: 8081
+  HOST_PORT: 8081
 
 on:
   push:
@@ -91,5 +93,5 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
           sudo docker stop ${{ env.IDCLOUDHOST_WEBAPP_NAME }} || true
           sudo docker rm ${{ env.IDCLOUDHOST_WEBAPP_NAME }} || true
-          sudo docker run -d -p 8080:8081 -e API_ENDPOINT_BASE_URL=/${{ env.DEPLOYING_BRANCH }}/api/v1 -e SERVER_PORT=8081 --name ${{ env.IDCLOUDHOST_WEBAPP_NAME }} ghcr.io/${{ env.REPO }}:${{ github.sha }}
+          sudo docker run -d -p ${{ env.HOST_PORT }}:${{ env.CONTAINER_PORT }} -e API_ENDPOINT_BASE_URL=/${{ env.DEPLOYING_BRANCH }}/api/v1 -e SERVER_PORT=${{ env.CONTAINER_PORT }} --name ${{ env.IDCLOUDHOST_WEBAPP_NAME }} ghcr.io/${{ env.REPO }}:${{ github.sha }}
           EOF
